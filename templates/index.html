@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block breadcrumb %}<span>Dashboard</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">System <span class="accent">Dashboard</span></h1>
+  <p class="page-subtitle">Real-time blockchain product authentication overview</p>
+</div>
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+  <div class="stat-card" style="--delay:0s">
+    <div class="stat-icon"><i class="fas fa-box-open"></i></div>
+    <div class="stat-info">
+      <div class="stat-value counter" data-target="{{ stats.total_products }}">0</div>
+      <div class="stat-label">Total Products</div>
+    </div>
+    <div class="stat-glow"></div>
+  </div>
+  <div class="stat-card stat-card--green" style="--delay:.1s">
+    <div class="stat-icon"><i class="fas fa-shield-halved"></i></div>
+    <div class="stat-info">
+      <div class="stat-value counter" data-target="{{ stats.total_products }}">0</div>
+      <div class="stat-label">Verified Genuine</div>
+    </div>
+    <div class="stat-glow"></div>
+  </div>
+  <div class="stat-card stat-card--purple" style="--delay:.2s">
+    <div class="stat-icon"><i class="fas fa-link"></i></div>
+    <div class="stat-info">
+      <div class="stat-value counter" data-target="{{ blocks }}">0</div>
+      <div class="stat-label">Blockchain Blocks</div>
+    </div>
+    <div class="stat-glow"></div>
+  </div>
+  <div class="stat-card stat-card--orange" style="--delay:.3s">
+    <div class="stat-icon"><i class="fas fa-industry"></i></div>
+    <div class="stat-info">
+      <div class="stat-value counter" data-target="{{ stats.manufacturers }}">0</div>
+      <div class="stat-label">Manufacturers</div>
+    </div>
+    <div class="stat-glow"></div>
+  </div>
+</div>
+
+<!-- Chain integrity banner -->
+<div class="integrity-banner {% if chain_valid %}integrity-ok{% else %}integrity-fail{% endif %}">
+  <div class="integrity-icon">
+    <i class="fas {% if chain_valid %}fa-check-double{% else %}fa-triangle-exclamation{% endif %}"></i>
+  </div>
+  <div class="integrity-text">
+    <strong>Blockchain Integrity:</strong>
+    {% if chain_valid %}
+      All {{ blocks }} blocks verified — chain is intact and untampered.
+    {% else %}
+      ⚠ Chain integrity violation detected! Data may have been tampered.
+    {% endif %}
+  </div>
+  <div class="integrity-hash">SHA-256 · Tamper-Proof</div>
+</div>
+
+<!-- How it works + Quick actions -->
+<div class="two-col">
+
+  <!-- Blockchain explanation -->
+  <div class="glass-card">
+    <div class="card-header">
+      <i class="fas fa-diagram-project"></i>
+      <h3>How Blockchain Works Here</h3>
+    </div>
+    <div class="how-steps">
+      <div class="how-step">
+        <div class="step-num">01</div>
+        <div class="step-body">
+          <strong>Product Added</strong>
+          <p>Product data is packaged into a block with timestamp and SHA-256 hash.</p>
+        </div>
+      </div>
+      <div class="chain-arrow"><i class="fas fa-arrow-down"></i></div>
+      <div class="how-step">
+        <div class="step-num">02</div>
+        <div class="step-body">
+          <strong>Hash Linking</strong>
+          <p>Each block stores the <em>previous block's hash</em>, forming an unbreakable chain.</p>
+        </div>
+      </div>
+      <div class="chain-arrow"><i class="fas fa-arrow-down"></i></div>
+      <div class="how-step">
+        <div class="step-num">03</div>
+        <div class="step-body">
+          <strong>Tamper Detection</strong>
+          <p>Any change to a block invalidates all subsequent hashes — instantly detectable.</p>
+        </div>
+      </div>
+      <div class="chain-arrow"><i class="fas fa-arrow-down"></i></div>
+      <div class="how-step">
+        <div class="step-num">04</div>
+        <div class="step-body">
+          <strong>Verification</strong>
+          <p>Scan a Product ID to confirm it exists in the immutable chain.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick actions + recent activity -->
+  <div class="right-col">
+    <div class="glass-card quick-actions">
+      <div class="card-header">
+        <i class="fas fa-bolt"></i>
+        <h3>Quick Actions</h3>
+      </div>
+      <div class="action-buttons">
+        <a href="{{ url_for('add_product') }}" class="btn-action btn-action--primary">
+          <i class="fas fa-plus"></i> Add Product
+        </a>
+        <a href="{{ url_for('verify_product') }}" class="btn-action btn-action--cyan">
+          <i class="fas fa-search"></i> Verify Product
+        </a>
+        <a href="{{ url_for('view_blockchain') }}" class="btn-action btn-action--purple">
+          <i class="fas fa-link"></i> View Chain
+        </a>
+        <a href="{{ url_for('export_csv') }}" class="btn-action btn-action--outline">
+          <i class="fas fa-download"></i> Export CSV
+        </a>
+      </div>
+    </div>
+
+    <div class="glass-card activity-card">
+      <div class="card-header">
+        <i class="fas fa-clock-rotate-left"></i>
+        <h3>Recent Activity</h3>
+      </div>
+      <div class="activity-list">
+        {% for act in recent %}
+        <div class="activity-item">
+          <div class="activity-dot activity-dot--{{ 'green' if act.action=='ADD_PRODUCT' else ('red' if act.action=='DELETE_PRODUCT' else 'cyan') }}"></div>
+          <div class="activity-detail">
+            <span class="activity-action">{{ act.action.replace('_',' ') }}</span>
+            <span class="activity-desc">{{ act.details }}</span>
+          </div>
+          <div class="activity-time">{{ act.created_at[:16] }}</div>
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="fas fa-inbox"></i> No activity yet</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

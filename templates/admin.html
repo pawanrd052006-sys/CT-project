@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel{% endblock %}
+{% block breadcrumb %}<i class="fas fa-chevron-right"></i><span>Admin Panel</span>{% endblock %}
+
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Admin <span class="accent">Panel</span></h1>
+  <p class="page-subtitle">Manage products, view analytics and monitor blockchain health</p>
+</div>
+
+<!-- Stats row -->
+<div class="stats-grid" style="--cols:3">
+  <div class="stat-card"><div class="stat-icon"><i class="fas fa-box"></i></div>
+    <div class="stat-info"><div class="stat-value">{{ stats.total_products }}</div><div class="stat-label">Total Products</div></div><div class="stat-glow"></div>
+  </div>
+  <div class="stat-card stat-card--purple"><div class="stat-icon"><i class="fas fa-tags"></i></div>
+    <div class="stat-info"><div class="stat-value">{{ stats.categories }}</div><div class="stat-label">Categories</div></div><div class="stat-glow"></div>
+  </div>
+  <div class="stat-card stat-card--green"><div class="stat-icon"><i class="fas fa-industry"></i></div>
+    <div class="stat-info"><div class="stat-value">{{ stats.manufacturers }}</div><div class="stat-label">Manufacturers</div></div><div class="stat-glow"></div>
+  </div>
+</div>
+
+<!-- Search + Export -->
+<div class="admin-toolbar glass-card">
+  <form method="GET" action="{{ url_for('admin') }}" class="search-form">
+    <input type="text" name="q" class="form-input" placeholder="Search products…"
+           value="{{ query }}" style="min-width:280px"/>
+    <button type="submit" class="btn-action btn-action--primary">
+      <i class="fas fa-search"></i> Search
+    </button>
+    {% if query %}
+    <a href="{{ url_for('admin') }}" class="btn-action btn-action--outline">
+      <i class="fas fa-times"></i> Clear
+    </a>
+    {% endif %}
+  </form>
+  <a href="{{ url_for('export_csv') }}" class="btn-action btn-action--outline">
+    <i class="fas fa-file-csv"></i> Export CSV
+  </a>
+</div>
+
+<!-- Charts -->
+<div class="two-col" style="margin-bottom:2rem">
+  <div class="glass-card">
+    <div class="card-header"><i class="fas fa-chart-pie"></i><h3>Products by Category</h3></div>
+    <canvas id="catChart" height="220"></canvas>
+  </div>
+  <div class="glass-card">
+    <div class="card-header"><i class="fas fa-clock-rotate-left"></i><h3>Recent Activity Log</h3></div>
+    <div class="activity-list" style="max-height:260px;overflow-y:auto">
+      {% for act in recent %}
+      <div class="activity-item">
+        <div class="activity-dot activity-dot--{{ 'green' if act.action=='ADD_PRODUCT' else ('red' if act.action=='DELETE_PRODUCT' else 'cyan') }}"></div>
+        <div class="activity-detail">
+          <span class="activity-action">{{ act.action.replace('_',' ') }}</span>
+          <span class="activity-desc">{{ act.details }}</span>
+        </div>
+        <div class="activity-time">{{ act.created_at[:16] }}</div>
+      </div>
+      {% else %}<div class="empty-state">No activity yet</div>{% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Products table -->
+<div class="glass-card">
+  <div class="card-header">
+    <i class="fas fa-table"></i>
+    <h3>All Products {% if query %}— search: "{{ query }}"{% endif %}</h3>
+    <span class="badge">{{ products|length }}</span>
+  </div>
+
+  {% if products %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Product ID</th>
+          <th>Name</th>
+          <th>Manufacturer</th>
+          <th>Category</th>
+          <th>Date</th>
+          <th>Block #</th>
+          <th>Hash (short)</th>
+          <th>QR</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+        <tr>
+          <td class="mono accent">{{ p.product_id }}</td>
+          <td><strong>{{ p.name }}</strong></td>
+          <td>{{ p.manufacturer }}</td>
+          <td><span class="cat-badge">{{ p.category }}</span></td>
+          <td>{{ p.date_added }}</td>
+          <td><span class="block-badge">#{{ p.block_index }}</span></td>
+          <td class="mono hash-short" title="{{ p.block_hash }}">{{ p.block_hash[:12] }}…</td>
+          <td>
+            <a href="{{ url_for('generate_qr', product_id=p.product_id) }}" target="_blank"
+               class="icon-btn" title="Download QR">
+              <i class="fas fa-qrcode"></i>
+            </a>
+          </td>
+          <td>
+            <div class="action-row">
+              <a href="{{ url_for('verify_product') }}?pid={{ p.product_id }}" class="icon-btn icon-btn--cyan" title="Verify">
+                <i class="fas fa-shield-halved"></i>
+              </a>
+              <form method="POST" action="{{ url_for('delete_product', product_id=p.product_id) }}"
+                    onsubmit="return confirm('Delete product {{ p.product_id }}? This will rebuild the blockchain.')">
+                <button type="submit" class="icon-btn icon-btn--red" title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="fas fa-inbox fa-2x"></i>
+    <p>No products found{% if query %} for "{{ query }}"{% endif %}.</p>
+    <a href="{{ url_for('add_product') }}" class="btn-action btn-action--primary" style="margin-top:1rem">
+      <i class="fas fa-plus"></i> Add First Product
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const catData = {{ categories | safe }};
+const labels = Object.keys(catData);
+const values = Object.values(catData);
+
+if (labels.length) {
+  const ctx = document.getElementById('catChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: [
+          '#00f5ff','#7c3aed','#10b981','#f59e0b','#ef4444',
+          '#3b82f6','#ec4899','#14b8a6','#f97316','#8b5cf6'
+        ],
+        borderColor: '#0f172a',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: '#94a3b8', font: { family: 'Rajdhani', size: 13 } } }
+      }
+    }
+  });
+}
+</script>
+{% endblock %}

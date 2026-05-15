@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>{% block title %}BlockVerify{% endblock %} — Blockchain Product Verification</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/main.css') }}"/>
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<!-- Animated background grid -->
+<div class="bg-grid"></div>
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+<div class="bg-glow bg-glow-3"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">
+      <i class="fas fa-cube"></i>
+    </div>
+    <div class="logo-text">
+      <span class="logo-main">Block<span class="accent">Verify</span></span>
+      <span class="logo-sub">Chain Authentication</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">MAIN</div>
+    <a href="{{ url_for('index') }}" class="nav-item {% if request.endpoint=='index' %}active{% endif %}">
+      <i class="fas fa-chart-line"></i>
+      <span>Dashboard</span>
+      <div class="nav-indicator"></div>
+    </a>
+    <a href="{{ url_for('add_product') }}" class="nav-item {% if request.endpoint=='add_product' %}active{% endif %}">
+      <i class="fas fa-plus-circle"></i>
+      <span>Add Product</span>
+      <div class="nav-indicator"></div>
+    </a>
+    <a href="{{ url_for('verify_product') }}" class="nav-item {% if request.endpoint=='verify_product' %}active{% endif %}">
+      <i class="fas fa-shield-halved"></i>
+      <span>Verify Product</span>
+      <div class="nav-indicator"></div>
+    </a>
+
+    <div class="nav-section-label">BLOCKCHAIN</div>
+    <a href="{{ url_for('view_blockchain') }}" class="nav-item {% if request.endpoint=='view_blockchain' %}active{% endif %}">
+      <i class="fas fa-link"></i>
+      <span>Chain Explorer</span>
+      <div class="nav-indicator"></div>
+    </a>
+    <a href="{{ url_for('admin') }}" class="nav-item {% if request.endpoint=='admin' %}active{% endif %}">
+      <i class="fas fa-sliders"></i>
+      <span>Admin Panel</span>
+      <div class="nav-indicator"></div>
+    </a>
+    <a href="{{ url_for('export_csv') }}" class="nav-item">
+      <i class="fas fa-file-export"></i>
+      <span>Export Data</span>
+      <div class="nav-indicator"></div>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="chain-status">
+      <div class="status-dot" id="chainStatusDot"></div>
+      <span id="chainStatusText">Chain Healthy</span>
+    </div>
+  </div>
+</aside>
+
+<!-- Mobile toggle -->
+<button class="sidebar-toggle" id="sidebarToggle">
+  <i class="fas fa-bars"></i>
+</button>
+
+<!-- Main content -->
+<main class="main-content">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="breadcrumb">
+        <i class="fas fa-home"></i>
+        {% block breadcrumb %}<span>Dashboard</span>{% endblock %}
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-time" id="topbarTime"></div>
+      <div class="topbar-badge">
+        <i class="fas fa-lock"></i>
+        <span>Secured</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for cat, msg in messages %}
+          <div class="flash flash-{{ cat }}">
+            <i class="fas {% if cat=='success' %}fa-circle-check{% elif cat=='error' %}fa-circle-xmark{% else %}fa-circle-info{% endif %}"></i>
+            <span>{{ msg }}</span>
+            <button class="flash-close" onclick="this.parentElement.remove()">×</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Page content -->
+  <div class="page-content">
+    {% block content %}{% endblock %}
+  </div>
+
+</main>
+
+<script src="{{ url_for('static',filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

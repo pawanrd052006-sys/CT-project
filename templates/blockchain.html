@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Chain Explorer{% endblock %}
+{% block breadcrumb %}<i class="fas fa-chevron-right"></i><span>Chain Explorer</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Blockchain <span class="accent">Explorer</span></h1>
+  <p class="page-subtitle">Visual representation of the immutable product ledger</p>
+</div>
+
+<!-- Chain integrity status -->
+<div class="integrity-banner {% if valid %}integrity-ok{% else %}integrity-fail{% endif %}" style="margin-bottom:2rem">
+  <div class="integrity-icon">
+    <i class="fas {% if valid %}fa-check-double{% else %}fa-triangle-exclamation{% endif %}"></i>
+  </div>
+  <div class="integrity-text">
+    <strong>Chain Status:</strong>
+    {% if valid %} All {{ chain|length }} blocks verified intact. {% else %} Integrity violation detected! {% endif %}
+  </div>
+  <div class="integrity-hash">{{ chain|length }} Blocks · SHA-256</div>
+</div>
+
+<!-- Block chain visualization -->
+<div class="chain-explorer">
+  {% for block in chain %}
+  <div class="block-card {% if block.index == 0 %}block-genesis{% endif %}" style="--delay: {{ loop.index0 * 0.08 }}s">
+
+    <!-- Block top bar -->
+    <div class="block-topbar">
+      <div class="block-index">
+        {% if block.index == 0 %}
+          <i class="fas fa-star"></i> GENESIS
+        {% else %}
+          <i class="fas fa-cube"></i> Block #{{ block.index }}
+        {% endif %}
+      </div>
+      <div class="block-ts">{{ block.timestamp[:19].replace('T',' ') }}</div>
+    </div>
+
+    <!-- Product data -->
+    <div class="block-body">
+      {% if block.data.get('type') == 'GENESIS' %}
+        <div class="genesis-msg">
+          <i class="fas fa-infinity"></i>
+          Chain Initialized — Origin Block
+        </div>
+      {% else %}
+        <div class="block-product">
+          <div class="bp-name">{{ block.data.name }}</div>
+          <div class="bp-meta">
+            <span><i class="fas fa-fingerprint"></i> {{ block.data.product_id }}</span>
+            <span><i class="fas fa-industry"></i> {{ block.data.manufacturer }}</span>
+            <span><i class="fas fa-tag"></i> {{ block.data.category }}</span>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Hash section -->
+    <div class="block-hashes">
+      <div class="bh-row">
+        <div class="bh-label">PREV HASH</div>
+        <div class="bh-val mono">{{ block.previous_hash[:32] }}…</div>
+      </div>
+      <div class="bh-divider"></div>
+      <div class="bh-row bh-current">
+        <div class="bh-label">THIS HASH</div>
+        <div class="bh-val mono">{{ block.hash[:32] }}…</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Chain connector arrow -->
+  {% if not loop.last %}
+  <div class="chain-connector">
+    <div class="connector-line"></div>
+    <div class="connector-arrow">
+      <i class="fas fa-arrow-down"></i>
+      <span>Prev Hash →</span>
+    </div>
+    <div class="connector-line"></div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <i class="fas fa-link fa-2x"></i>
+    <p>Blockchain is empty. Add a product to create the first block.</p>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Full hash table -->
+{% if chain|length > 1 %}
+<div class="glass-card" style="margin-top:3rem">
+  <div class="card-header">
+    <i class="fas fa-table"></i>
+    <h3>Complete Hash Table</h3>
+  </div>
+  <div class="hash-table-wrap">
+    <table class="hash-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Product ID</th>
+          <th>Timestamp</th>
+          <th>Previous Hash (full)</th>
+          <th>Block Hash (full)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for block in chain %}
+        <tr>
+          <td>{{ block.index }}</td>
+          <td>{{ block.data.get('product_id', 'GENESIS') }}</td>
+          <td class="mono">{{ block.timestamp[:19].replace('T',' ') }}</td>
+          <td class="mono hash-cell">{{ block.previous_hash }}</td>
+          <td class="mono hash-cell hash-current">{{ block.hash }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

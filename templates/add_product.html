@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Add Product{% endblock %}
+{% block breadcrumb %}<i class="fas fa-chevron-right"></i><span>Add Product</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Add <span class="accent">Product</span></h1>
+  <p class="page-subtitle">Register a new product into the blockchain ledger</p>
+</div>
+
+<div class="form-layout">
+
+  <!-- Form card -->
+  <div class="glass-card form-card">
+    <div class="card-header">
+      <i class="fas fa-cube"></i>
+      <h3>New Product Registration</h3>
+    </div>
+
+    <form method="POST" action="{{ url_for('add_product') }}" id="addForm">
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-fingerprint"></i> Product ID
+          </label>
+          <input type="text" name="product_id" class="form-input"
+                 placeholder="e.g. PROD-2024-001"
+                 value="{{ form.get('product_id','') }}" required/>
+          <span class="form-hint">Unique identifier — will be converted to uppercase</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-tag"></i> Product Name
+          </label>
+          <input type="text" name="name" class="form-input"
+                 placeholder="e.g. Premium Laptop X1"
+                 value="{{ form.get('name','') }}" required/>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-industry"></i> Manufacturer
+          </label>
+          <input type="text" name="manufacturer" class="form-input"
+                 placeholder="e.g. TechCorp Industries"
+                 value="{{ form.get('manufacturer','') }}" required/>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-list"></i> Category
+          </label>
+          <select name="category" class="form-input form-select" required>
+            <option value="">— Select Category —</option>
+            {% set cats = ['Electronics','Pharmaceuticals','Food & Beverage','Clothing','Automotive','Cosmetics','Jewelry','Industrial','Healthcare','Other'] %}
+            {% for cat in cats %}
+              <option value="{{ cat }}" {% if form.get('category')==cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-calendar"></i> Date Added
+          </label>
+          <input type="date" name="date_added" class="form-input"
+                 value="{{ form.get('date_added', '') }}" required/>
+        </div>
+
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">
+        <span class="btn-text">
+          <i class="fas fa-cube"></i>
+          Generate Blockchain Block
+        </span>
+        <div class="btn-loading" style="display:none">
+          <i class="fas fa-spinner fa-spin"></i> Mining Block…
+        </div>
+      </button>
+    </form>
+  </div>
+
+  <!-- Side info -->
+  <div class="form-side">
+
+    <div class="glass-card info-card">
+      <div class="card-header">
+        <i class="fas fa-lock"></i>
+        <h3>What Happens Next?</h3>
+      </div>
+      <div class="info-steps">
+        <div class="info-step">
+          <div class="info-icon"><i class="fas fa-file-code"></i></div>
+          <div>
+            <strong>Data Packaged</strong>
+            <p>Your product details are serialised into JSON.</p>
+          </div>
+        </div>
+        <div class="info-step">
+          <div class="info-icon"><i class="fas fa-hashtag"></i></div>
+          <div>
+            <strong>SHA-256 Hashed</strong>
+            <p>A unique 64-character hash fingerprint is computed.</p>
+          </div>
+        </div>
+        <div class="info-step">
+          <div class="info-icon"><i class="fas fa-link"></i></div>
+          <div>
+            <strong>Block Linked</strong>
+            <p>The previous block's hash is embedded — chain grows.</p>
+          </div>
+        </div>
+        <div class="info-step">
+          <div class="info-icon"><i class="fas fa-database"></i></div>
+          <div>
+            <strong>Persisted</strong>
+            <p>Saved to SQLite so data survives restarts.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live hash preview -->
+    <div class="glass-card hash-preview" id="hashPreview" style="display:none">
+      <div class="card-header">
+        <i class="fas fa-hashtag"></i>
+        <h3>Live Hash Preview</h3>
+      </div>
+      <div class="hash-box">
+        <div class="hash-label">SHA-256 of Product ID</div>
+        <div class="hash-value" id="previewHash">—</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Live SHA-256 preview using SubtleCrypto
+const pidInput = document.querySelector('input[name="product_id"]');
+const preview = document.getElementById('hashPreview');
+const hashEl = document.getElementById('previewHash');
+
+async function sha256(msg) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+pidInput.addEventListener('input', async () => {
+  const val = pidInput.value.trim().toUpperCase();
+  if (val.length > 2) {
+    preview.style.display = 'block';
+    hashEl.textContent = await sha256(val);
+    hashEl.classList.add('hash-animate');
+    setTimeout(()=>hashEl.classList.remove('hash-animate'), 300);
+  } else {
+    preview.style.display = 'none';
+  }
+});
+
+// Loading state on submit
+document.getElementById('addForm').addEventListener('submit', () => {
+  document.querySelector('.btn-text').style.display = 'none';
+  document.querySelector('.btn-loading').style.display = 'flex';
+});
+</script>
+{% endblock %}

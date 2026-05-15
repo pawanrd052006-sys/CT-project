@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Verify Product{% endblock %}
+{% block breadcrumb %}<i class="fas fa-chevron-right"></i><span>Verify Product</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Product <span class="accent">Verification</span></h1>
+  <p class="page-subtitle">Scan the blockchain ledger to confirm product authenticity</p>
+</div>
+
+<!-- Verify search -->
+<div class="verify-layout">
+
+  <div class="glass-card verify-form-card">
+    <div class="card-header">
+      <i class="fas fa-shield-halved"></i>
+      <h3>Enter Product ID</h3>
+    </div>
+    <form method="POST" action="{{ url_for('verify_product') }}" id="verifyForm">
+      <div class="verify-search">
+        <input type="text" name="product_id" class="form-input verify-input"
+               placeholder="e.g. PROD-2024-001"
+               value="{% if result and not result.genuine %}{{ result.product_id }}{% elif result and result.genuine %}{{ result.product.product_id }}{% endif %}"
+               autofocus required/>
+        <button type="submit" class="btn-verify">
+          <i class="fas fa-search"></i>
+          <span>Verify</span>
+        </button>
+      </div>
+    </form>
+
+    <div class="verify-tips">
+      <i class="fas fa-circle-info"></i>
+      Enter the full Product ID exactly as printed on the product label.
+    </div>
+  </div>
+
+  {% if result %}
+
+    {% if result.genuine %}
+    <!-- GENUINE result -->
+    <div class="result-card result-genuine">
+      <div class="result-header">
+        <div class="result-badge result-badge--genuine">
+          <i class="fas fa-circle-check"></i>
+          <span>GENUINE PRODUCT</span>
+        </div>
+        <div class="result-chain-valid">
+          <i class="fas fa-link"></i>
+          Chain {{ "Intact" if result.chain_valid else "⚠ Compromised" }}
+        </div>
+      </div>
+
+      <div class="result-body">
+        <div class="result-product-name">{{ result.product.name }}</div>
+
+        <div class="result-meta-grid">
+          <div class="result-meta">
+            <span class="meta-key"><i class="fas fa-fingerprint"></i> Product ID</span>
+            <span class="meta-val">{{ result.product.product_id }}</span>
+          </div>
+          <div class="result-meta">
+            <span class="meta-key"><i class="fas fa-industry"></i> Manufacturer</span>
+            <span class="meta-val">{{ result.product.manufacturer }}</span>
+          </div>
+          <div class="result-meta">
+            <span class="meta-key"><i class="fas fa-list"></i> Category</span>
+            <span class="meta-val">{{ result.product.category }}</span>
+          </div>
+          <div class="result-meta">
+            <span class="meta-key"><i class="fas fa-calendar"></i> Date Added</span>
+            <span class="meta-val">{{ result.product.date_added }}</span>
+          </div>
+          <div class="result-meta">
+            <span class="meta-key"><i class="fas fa-cube"></i> Block Index</span>
+            <span class="meta-val">#{{ result.block_index }}</span>
+          </div>
+          <div class="result-meta">
+            <span class="meta-key"><i class="fas fa-clock"></i> Block Time</span>
+            <span class="meta-val">{{ result.timestamp[:19].replace('T',' ') }}</span>
+          </div>
+        </div>
+
+        <!-- Hash display -->
+        <div class="hash-panel">
+          <div class="hash-row">
+            <div class="hash-label"><i class="fas fa-hashtag"></i> Block Hash</div>
+            <div class="hash-value mono">{{ result.block_hash }}</div>
+          </div>
+          <div class="chain-link-visual"><i class="fas fa-link"></i></div>
+          <div class="hash-row">
+            <div class="hash-label"><i class="fas fa-arrow-up"></i> Previous Hash</div>
+            <div class="hash-value mono">{{ result.prev_hash }}</div>
+          </div>
+        </div>
+
+        <!-- QR Code -->
+        <div class="qr-section">
+          <div class="qr-label"><i class="fas fa-qrcode"></i> Verification QR</div>
+          <img src="{{ url_for('generate_qr', product_id=result.product.product_id) }}"
+               alt="QR Code" class="qr-img" loading="lazy"/>
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+    <!-- FAKE / NOT FOUND result -->
+    <div class="result-card result-fake">
+      <div class="result-header">
+        <div class="result-badge result-badge--fake">
+          <i class="fas fa-circle-xmark"></i>
+          <span>NOT VERIFIED — POSSIBLE FAKE</span>
+        </div>
+      </div>
+      <div class="result-body">
+        <div class="fake-icon"><i class="fas fa-triangle-exclamation"></i></div>
+        <div class="fake-pid">{{ result.product_id }}</div>
+        <p class="fake-msg">
+          This Product ID was <strong>not found</strong> in the blockchain ledger.
+          This product may be counterfeit, unregistered, or the ID may be incorrect.
+        </p>
+        <div class="fake-actions">
+          <a href="{{ url_for('verify_product') }}" class="btn-action btn-action--outline">
+            <i class="fas fa-redo"></i> Try Again
+          </a>
+          <a href="{{ url_for('add_product') }}" class="btn-action btn-action--primary">
+            <i class="fas fa-plus"></i> Register Product
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  {% else %}
+  <!-- Default state — illustration -->
+  <div class="verify-illustration">
+    <div class="verify-anim">
+      <div class="scan-ring scan-ring-1"></div>
+      <div class="scan-ring scan-ring-2"></div>
+      <div class="scan-ring scan-ring-3"></div>
+      <div class="scan-core"><i class="fas fa-shield-halved"></i></div>
+    </div>
+    <p>Enter a Product ID above to check authenticity against the blockchain.</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
